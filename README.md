@@ -1,15 +1,45 @@
-# toolbox of goodies
+# useful tools for the KnowledgeBase
 
-## squirrel.py
+[KnowledgeBase by Ingo Straub](https://inforapid.org/webapp/login.php)
 
-simple commandline wrapper around credstash
+## knowldge.py
 
-## treeify.py
+tool to read/modify kdb files
 
-display items in an ascii tree format
+```bash
+$ knowledge.py -h
+usage: knowledge.py [-h] [-D DATABASE] [-e EXPORTDIR] [-k] [-v]
+                    {clean,deArrow,export,import,inspect,load_excel,load_opml,query,replace,sort,args}
+                    ...
 
-## GoogleMaps.py
+positional arguments:
+  {clean,deArrow,export,import,inspect,load_excel,load_opml,query,replace,sort,args}
+                        operations
+    clean
+    deArrow
+    export
+    import
+    inspect
+    load_excel
+    load_opml
+    query
+    replace
+    sort
+    args                print the values for the args
 
-query the google maps api from the command line
+optional arguments:
+  -h, --help            show this help message and exit
+  -D DATABASE, --database DATABASE
+                        Knowledge Base database, default=Empty.kdb
+  -e EXPORTDIR, --exportdir EXPORTDIR
+                        output to export dir, default=export
+  -k, --klobber         klobber db
+  -v, --verbose         verbose logging
 
+
+```
+
+## outline.py
+
+tool to read opml files and work with kdb loading formats
 

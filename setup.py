@@ -30,10 +30,12 @@ setup(
 		'sqlalchemy',
 		'sqlite3',
 		'xmltodict',
+		'xlrd',
+		'xlwt',
 		'Baubles',
 		'Perdy',
 		'Argumental',
-	    	'Swapsies',
+		'Swapsies',
 	],
 	scripts=[
 		'bin/knowledge.py',

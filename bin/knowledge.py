@@ -4,6 +4,9 @@
 
 import os, re, sys, json, codecs, logging, requests, arrow, shutil, sqlite3, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
 
+# remove before deployment
+sys.path.append('..')
+
 # https://github.com/serkanyersen/underscore.py/
 # pip3 install underscore.py
 
@@ -38,7 +41,7 @@ from Baubles.Colours import Colours
 from sqlalchemy.engine import reflection
 from sqlalchemy import not_
 
-from model import *
+from KnowledgeBase.model import *
 
 #=====================================================
 args = Argue()
@@ -628,13 +631,6 @@ class Export(object):
 #=====================================================
 def main():
 	quietly()
-	#print(json.dumps(dict(os.environ), indent=4))
-	if 'Pythonista' in os.environ['HOME']:
-		#args.parse(['-h'])
-		#args.parse(['-D','David Edson.kdb','sort','Software Licenses', '-d','2'])
-		#args.parse(['-D','David Edson.kdb','sort','Projects','-n'])
-		args.parse(['-D','CCA MVP.kdb','inspect'])
-		#args.parse(['-D', 'CCA MVP.kdb', 'load_opml',  'CCA MVP.opml'])
 	args.execute()
 
 		

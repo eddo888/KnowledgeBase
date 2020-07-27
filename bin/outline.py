@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # PYTHON_ARGCOMPLETE_OK
 
@@ -6,8 +6,6 @@ import sys, os, json, logging, arrow, codecs, xmltodict
 
 from uuid import uuid4
 from collections import OrderedDict
-
-from CloudOutliner import *
 
 logging.getLogger('pyxb.binding.content').setLevel(logging.ERROR)
 
@@ -165,8 +163,8 @@ class COD2KDB(object):
 
 
 #_________________________________________________
-if __name__ == '__main__': 
-	COD2KDB().opml2kdb(
-		'UQ BPM Criteria.opml', 
-		'UQ BPM Criteria.txt'
-	)
+def main():
+	COD2KDB().opml2kdb(sys.argv[1])
+	
+#_________________________________________________
+if __name__ == '__main__': main()
