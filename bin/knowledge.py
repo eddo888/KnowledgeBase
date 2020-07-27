@@ -4,9 +4,6 @@
 
 import os, re, sys, json, codecs, logging, requests, arrow, shutil, sqlite3, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
 
-# remove before deployment
-sys.path.append('..')
-
 # https://github.com/serkanyersen/underscore.py/
 # pip3 install underscore.py
 
