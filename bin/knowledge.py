@@ -2,7 +2,7 @@
 
 # PYTHON_ARGCOMPLETE_OK
 
-import os, re, sys, json, codecs, logging, requests, arrow, shutil, sqlite3, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
+import os, re, sys, json, codecs, logging, requests, arrow, shutil, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
 
 # https://github.com/serkanyersen/underscore.py/
 # pip3 install underscore.py
