@@ -39,6 +39,43 @@ optional arguments:
 
 ```
 
+### usage
+
+to inspect a kdb do the following;
+
+```bash
+$ pip3 install KnowledgeBase
+
+$ knowledge.py -D Recipies.kdb inspect 
+Recipies
+Fetachini Pesto
+Corn fritters
+```
+
+or you can inspect with filter parameters
+
+```bash
+$ knowledge.py -D Recipies.kdb inspect -h
+usage: knowledge.py inspect [-h] [-n NAME] [-r] [-c] [-a]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n NAME, --name NAME  the name of the element
+  -r, --references      list references
+  -c, --categories      list categories
+  -a, --attachments     list attachments
+```
+
+which would give you filtered results like this
+
+```bash
+$ knowledge.py -D Recipies.kdb inspect -n 'Recipies' -r
+Recipies
+	Fetachini Pesto
+	Corn fritters
+
+```
+
 ## outline.py
 
 tool to read opml files and work with kdb loading formats

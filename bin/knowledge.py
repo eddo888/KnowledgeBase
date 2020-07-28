@@ -272,8 +272,6 @@ class Export(object):
 			
 			if 'outline' in outline.keys():
 				self._process(outline['outline'], session=session, parent=item, indent='  %s'%indent)
-			#print(json.dumps(outline, indent=4))		
-
 			
 					
 	#.................................................
@@ -406,14 +404,14 @@ class Export(object):
 
 		if categories:
 			query = session.query(ItemTemplate)
-			if name: query = query.filter_by(Name=nmne)
+			if name: query = query.filter_by(Name=name)
 			for category in query.all():
 				print(category.ItemTemplateID, category.TemplateName)
 			return
 		
 		if attachments:
 			query = session.query(ItemAttachment)
-			if name: query = query.filter_by(Name=name)
+			if name: query = query.join(ItemAttachment.item).filter(Item.Name == name)
 			for attachment in query.all():
 				print(attachment.item.Name[:20], attachment.attachment.Data[:60])
 			return
