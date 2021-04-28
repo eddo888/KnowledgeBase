@@ -286,8 +286,7 @@ class Export(object):
 		session.add(root)
 
 		root.Description = file
-		
-		opml = xmltodict.parse(open(file).read())
+		opml = xmltodict.parse(open(file,'rb').read().decode('UTF8'))
 		root.Name = opml['opml']['head']['title']
 
 		self._process(opml['opml']['body']['outline'], session=session, parent=root)
@@ -626,6 +625,12 @@ class Export(object):
 #=====================================================
 def main():
 	quietly()
+	if False:
+		args.parse([
+			'-D x-plane.kdb',
+			'load_opml',
+			'/private/var/mobile/Containers/Shared/AppGroup/BEF79531-6F97-451F-BC9E-E426A90A45C5/File Provider Storage/Repositories/bitbucket.org/KnowledgeBase/x-plane.opml',
+		])
 	args.execute()
 
 		
