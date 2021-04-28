@@ -627,9 +627,10 @@ def main():
 	quietly()
 	if False:
 		args.parse([
-			'-D x-plane.kdb',
+			'-k',
+			'-D','x-plane.kdb',
 			'load_opml',
-			'/private/var/mobile/Containers/Shared/AppGroup/BEF79531-6F97-451F-BC9E-E426A90A45C5/File Provider Storage/Repositories/bitbucket.org/KnowledgeBase/x-plane.opml',
+			'x-plane.opml',
 		])
 	args.execute()
 
