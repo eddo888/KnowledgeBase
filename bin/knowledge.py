@@ -253,14 +253,21 @@ class Export(object):
 	
 	#.................................................
 	def _process(self, outlines, session=None, parent=None, indent=''):
+		url_pattern=re.compile('.*(https*://\S+)\s*.*')
 		if type(outlines) is not list:
 			outlines = [outlines]
 		for outline in outlines:
 			item = Item()
 			session.add(item)
 			if '@text' in outline.keys():
-				item.Name = outline['@text']
-				print('%s%s'%(indent, outline['@text']))
+				text = outline['@text']
+				url_match = url_pattern.match(text)
+				if url_match:
+					url = url_match.group(1)
+					item.DirectLinkURL = url
+					text = text.replace(url,'')
+				item.Name = text
+				print('%s%s'%(indent, text))
 			if '@_note' in outline.keys():
 				item.Description = outline['@_note']
 				print('  %s"%s"'%(indent, outline['@_note']))
@@ -627,10 +634,10 @@ def main():
 	quietly()
 	if False:
 		args.parse([
-			'-k',
-			'-D','x-plane.kdb',
+			'-D',
+			'libraries.kdb',
 			'load_opml',
-			'x-plane.opml',
+			'libraries.opml',
 		])
 	args.execute()
 
