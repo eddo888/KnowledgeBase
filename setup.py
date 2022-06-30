@@ -8,7 +8,7 @@ pwd = path.abspath(path.dirname(__file__))
 with codecs.open(path.join(pwd, 'README.md'), 'r', encoding='utf8') as input:
     long_description = input.read()
 
-version='1.2'
+version='1.3'
 name='KnowledgeBase'
 
 setup(

@@ -77,7 +77,8 @@ class ItemAttachment(Base):
 		ForeignKey("Items.ItemID"),
 	)
 	item = relationship(
-		'Item', foreign_keys=[ItemID]
+		'Item',
+		foreign_keys=[ItemID]
 	)
 	RecordID = Column(
 		Integer,
@@ -175,15 +176,18 @@ class Item(Base):
 		"Relation",
 		collection_class=list,
 		foreign_keys='Relation.IDFrom',
+		back_populates='_outbound',
 	)
 	inbound = relationship(
 		"Relation",
 		collection_class=list,
 		foreign_keys='Relation.IDTo',
+		back_populates='_inbound',
 	)
 	attachments = relationship(
 		"ItemAttachment",
 		collection_class=list,
+		back_populates='item',
 	)
 
 	def __init__(self):
@@ -434,6 +438,7 @@ class Relation(Base):
 	_inbound = relationship(
 		"Item",
 		foreign_keys=[IDFrom],
+		overlaps="outbound"
 	)
 	
 	@property
@@ -455,6 +460,7 @@ class Relation(Base):
 	_outbound = relationship(
 		"Item",
 		foreign_keys=[IDTo],
+		overlaps="inbound"
 	)
 		
 	@property

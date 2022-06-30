@@ -4,9 +4,11 @@
 
 import os, re, sys, json, codecs, logging, requests, arrow, shutil, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
 
+if os.path.dirname(sys.argv[0]) == '.':
+	sys.path.insert(0, '..')
+
 # https://github.com/serkanyersen/underscore.py/
 # pip3 install underscore.py
-
 from underscore import _
 
 from time import mktime
@@ -50,6 +52,7 @@ treeify = Treeify(colour=True)
 #_____________________________________________________
 def quietly():
 	for logger in [
+		"sqlalchemy.engine.Engine",
 		"sqlalchemy.orm.relationships.RelationshipProperty",
 		"sqlalchemy.orm.strategies.LazyLoader", "sqlalchemy.orm.path_registry",
 		"sqlalchemy.orm.mapper.Mapper", "sqlalchemy.engine.base.Engine",
@@ -216,7 +219,7 @@ class Export(object):
 		if not self.__engine:
 			self.__engine = sqlalchemy.create_engine(self.url)
 			
-		self.inspector = reflection.Inspector.from_engine(self.__engine)
+		self.inspector = sqlalchemy.inspect(self.__engine)
 		
 		self.tables = dict() # table: [ column ]
 		for table in self.inspector.get_table_names():
@@ -408,6 +411,12 @@ class Export(object):
 	def inspect(self, name=None, references=False, categories=False, attachments=False):
 		session = self.Session()
 
+		if references:
+			query = session.query(Relation)
+			for reference in query.all():
+				print(f'{reference.inbound.Name} -> {reference.outbound.Name} : {reference.Name}')
+			return
+		
 		if categories:
 			query = session.query(ItemTemplate)
 			if name: query = query.filter_by(Name=name)
@@ -468,14 +477,18 @@ class Export(object):
 	#.................................................
 	@args.operation
 	@args.parameter(name='value', help='string to search in name for')
-	@args.parameter(name='description', short='d', flag=True, help='search in description as well')
-	def query(self, value, description=False):
+	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
+	def query(self, value, description=False, categories=[]):
 		session = self.Session()
-		for item in session.query(Item):
-			if value in item.Name:
-				print(item.Name)
-			if description and value in item.Description:
-				print('\t%s'%item.Description)
+		
+		query = session.query(Item).filter(Item.Name.like(value)).join(Item.category)
+
+		for item in query.all():
+			if categories:
+				if item.category.TemplateName not in categories:
+					continue
+			print(item.Name)
+				
 		session.close()
 
 		
