@@ -42,14 +42,12 @@ from sqlalchemy import not_
 
 from KnowledgeBase.model import *
 
-#=====================================================
 args = Argue()
 squirrel = Squirrel()
 logger = Logger()
 colours = Colours()
 treeify = Treeify(colour=True)
 
-#_____________________________________________________
 def quietly():
 	for logger in [
 		"sqlalchemy.engine.Engine",
@@ -63,12 +61,10 @@ def quietly():
 		logging.getLogger(logger).setLevel(logging.WARNING)
 
 
-#_____________________________________________________
 def clean(text):
 	return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
 
 
-#_____________________________________________________
 def public(node):
 	tipe = type(node)
 	if tipe is list:
@@ -81,7 +77,6 @@ def public(node):
 	return node
 	
 
-#_____________________________________________________
 def uncomment(value):
 	comment = re.compile('(\<\!\-\-|\-\-\>)')
 	value = value.replace('\n', '%%%%%')
@@ -97,13 +92,10 @@ def uncomment(value):
 	return output.getvalue().replace('%%%%%', '\n')
 
 
-#=====================================================
 class Empty(object):
 
 	base64 = 'Empty.base64'
 	
-	
-	#.................................................
 	def touch(self, file, adt=None):
 		stat = os.stat(file)
 		(st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid, st_size, st_atime,
@@ -116,7 +108,6 @@ class Empty(object):
 		return adt
 		
 	
-	#.................................................
 	def toDB(self, b64, db):
 		t = self.touch(b64)
 		with open(b64, 'r') as fi:
@@ -129,7 +120,6 @@ class Empty(object):
 		return
 	
 	
-	#.................................................
 	def fromDB(self, db, b64):
 		t = self._touch(db)
 		with open(db, 'rb') as fi:
@@ -142,7 +132,6 @@ class Empty(object):
 		return
 	
 		
-#=====================================================
 @args.command(single=True)
 class Export(object):
 	
@@ -166,7 +155,6 @@ class Export(object):
 		return
 
 
-	#.................................................
 	def __init__(self, verbose=False):
 
 		if self.klobber:
@@ -203,12 +191,10 @@ class Export(object):
 		self.__Session.configure(bind=self.engine)
 
 
-	#.................................................
 	def __del__(self):
 		self.errorlog.close()
 
 
-	#.................................................
 	@property
 	def engine(self):
 		'''
@@ -230,7 +216,6 @@ class Export(object):
 		return self.__engine
 
 
-	#.................................................
 	def Session(self):
 		'''
 		return a new session object
@@ -238,7 +223,6 @@ class Export(object):
 		return self.__Session()
 
 
-	#.................................................
 	def _sequences(self, session):
 		results = dict()
 		for sequence in session.query(t_sqlite_sequence):
@@ -246,7 +230,6 @@ class Export(object):
 		prettyPrintLn(results,align=True)	
 			
 
-	#.................................................
 	def _undone(self, session):
 		rows = list()
 		for undo in session.query(UndoLog):
@@ -254,7 +237,6 @@ class Export(object):
 		prettyPrintLn(rows)
 		
 	
-	#.................................................
 	def _process(self, outlines, session=None, parent=None, indent=''):
 		url_pattern=re.compile('.*(https*://\S+)\s*.*')
 		if type(outlines) is not list:
@@ -284,7 +266,6 @@ class Export(object):
 				self._process(outline['outline'], session=session, parent=item, indent='  %s'%indent)
 			
 					
-	#.................................................
 	@args.operation
 	@args.parameter(name='klobber', short='k', flag=True, help='create from scratch')
 	def load_opml(self, file, klobber=False):
@@ -305,7 +286,6 @@ class Export(object):
 		session.close()
 
 		
-	#.................................................
 	@args.operation
 	def load_excel(self, file):
 		session = self.Session()
@@ -373,7 +353,6 @@ class Export(object):
 		session.close()			
 		
 		
-	#.................................................
 	@args.operation(name="import")
 	def importer(self):
 		session = self.Session()
@@ -402,7 +381,6 @@ class Export(object):
 		session.close()
 
 
-	#.................................................
 	@args.operation
 	@args.parameter(name='name', short='n', help='the name of the element')
 	@args.parameter(name='references', short='r', flag=True, help='list references')
@@ -443,7 +421,6 @@ class Export(object):
 		session.close()
 
 
-	#.................................................
 	def _sort(self, session, item, depth=1, indent=''):
 		sys.stdout.write('%s\n'%(item.Name))
 		if depth > 0:
@@ -458,7 +435,6 @@ class Export(object):
 				self._sort(session, relation.outbound, depth-1, indent='%s\t'%indent)
 
 				
-	#.................................................
 	@args.operation
 	@args.parameter(name='name', help='name of node to sort references for')
 	@args.parameter(name='depth', short='d', type=int, help='recursion depth')
@@ -474,7 +450,6 @@ class Export(object):
 		session.close()
 
 		
-	#.................................................
 	@args.operation
 	@args.parameter(name='value', help='string to search in name for')
 	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
@@ -492,7 +467,6 @@ class Export(object):
 		session.close()
 
 		
-	#.................................................
 	@args.operation
 	@args.parameter(name='old', help='string to search in name for')
 	@args.parameter(name='new', help='string to replace with')
@@ -517,7 +491,6 @@ class Export(object):
 		session.close()
 
 		
-	#.................................................
 	@args.operation
 	def clean(self):
 		session = self.Session()
@@ -535,18 +508,16 @@ class Export(object):
 		session.close()
 
 
-	#.................................................
 	@args.operation
 	def export(self):
 		shutil.copy2(self.database, '%s/.kdb'%self.exportdir)
-		self.inspector = reflection.Inspector.from_engine(self.engine)
+		self.inspector =  sqlalchemy.inspect(self.__engine)
 		for table in self.inspector.get_table_names():
 			if table.startswith('general_db'):
 				continue
 			self._table(table)
 
 
-	#.................................................
 	@args.operation
 	def deArrow(self):
 		session = self.Session()
@@ -562,7 +533,6 @@ class Export(object):
 		session.close()
 
 
-	#.................................................
 	def _column(self, column, value):
 		if not value: return ''
 		if not 'type' in column.keys(): return ''
@@ -593,7 +563,6 @@ class Export(object):
 		return '"%s"' % value
 
 
-	#.................................................
 	def _row(self, output, columns, row):
 		values = []
 		for c in range(len(row)):
@@ -605,7 +574,6 @@ class Export(object):
 		output.write('%s\n' % ('\t'.join(values)))
 
 
-	#.................................................
 	def _header(self, table):
 		columns = dict(
 			map(lambda x: (x['name'], x), self.inspector.get_columns(table)))
@@ -619,7 +587,6 @@ class Export(object):
 		return header
 
 
-	#.................................................
 	def _table(self, table):
 		print(table)
 		file = '%s/%s.csv' % (self.exportdir, table)
@@ -642,7 +609,6 @@ class Export(object):
 				print(input.read())
 
 
-#=====================================================
 def main():
 	quietly()
 	if False:
@@ -655,5 +621,4 @@ def main():
 	args.execute()
 
 		
-#_____________________________________________________
 if __name__ == '__main__': main()
