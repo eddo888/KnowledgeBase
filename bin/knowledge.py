@@ -485,7 +485,7 @@ class Export(object):
 				
 			if attachments:
 				for attachment in item.attachments:
-					print(f'& {attachment.AttachmentID}')
+					print(f'\t& {attachment.attachment.Data}')
 					
 			if references in ['i','b']:
 				for reference in item.inbound:
