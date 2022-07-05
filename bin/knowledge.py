@@ -408,12 +408,12 @@ class Export(object):
 		if references:
 			query = session.query(RelationTemplate)
 			for relation in query.all():
-				print(relation.RelationTemplateID, relation.TemplateName)
+				print(relation.TemplateName)
 					  
 		else:
 			query = session.query(ItemTemplate)
 			for category in query.all():
-				print(category.ItemTemplateID, category.TemplateName)
+				print(category.TemplateName)
 		
 		session.close()
 
@@ -452,58 +452,13 @@ class Export(object):
 
 
 	@args.operation
-	@args.parameter(name='name', short='n', help='the name of the element')
-	def query_attachments(self, name):
-		'''
-		find the attachments for an item by name
-		'''
-
-		session = self.Session()
-			
-		query = session.query(ItemAttachment)
-		if name: query = query.join(ItemAttachment.item).filter(Item.Name == name)
-		for attachment in query.all():
-			print(attachment.item.Name[:20], attachment.attachment.Data[:60])
-
-		session.close()
-		
-
-	@args.operation
-	@args.parameter(name='name', help='the name of the element')
-	@args.parameter(name='inbound', short='i', flag=True, help='return inboudn instead')
-	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
-	def query_references(self, name, inbound=False, categories=[]):
-		'''
-		get the outbound references for named item
-		'''
-		
-		session = self.Session()
-
-		if inbound:
-			query = session.query(Relation).join(Relation._inbound).join(Relation.category)
-		else:
-			query = session.query(Relation).join(Relation._outbound).join(Relation.category)
-		
-		for reference in query.all():
-			if inbound:
-				if reference.inbound.Name != name:
-					continue
-			else:
-				if reference.outbound.Name != name:
-					continue
-			if categories:
-				if reference.category.TemplateName not in categories:
-					continue
-			print(f'{reference.inbound.Name} -> {reference.outbound.Name} : {reference.Name}')
-
-		session.close()
-		
-		
-	@args.operation
 	@args.parameter(name='name', help='string to search in name for')
-	@args.parameter(name='references', short='r', choices=['i','o','b'], help='include references')
+	@args.parameter(name='description', short='d', flag=True, help='include description')
+	@args.parameter(name='url', short='u', flag=True, help='include url')
+	@args.parameter(name='attachments', short='a', flag=True, help='include attachments')
+	@args.parameter(name='references', short='r', choices={'i':'inbound','o':'outbound','b':'both'}, help='include references')
 	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
-	def query_items(self, name, references=None, categories=[]):
+	def query(self, name, description=None, url=None, attachments=None, references=None, categories=[]):
 		'''
 		query a value, and filter by category
 		'''
@@ -516,13 +471,35 @@ class Export(object):
 			if categories:
 				if item.category.TemplateName not in categories:
 					continue
-			print(item.Name)
+
+			text = f'{item.Name}'
+			if item.category:
+				text = f'{text} : <{item.category.TemplateName}>'
+			print(text)
+			
+			if description:
+				print(f'\t# {item.Description}')
+				
+			if url:
+				print(f'\t@ {item.DirectLinkURL}')
+				
+			if attachments:
+				for attachment in item.attachments:
+					print(f'& {attachment.AttachmentID}')
+					
 			if references in ['i','b']:
 				for reference in item.inbound:
-					print(f'\t< {reference.inbound.Name}')
+					text = f'\t< {reference.inbound.Name}'
+					if reference.category:
+						text = f'{text} : <{reference.category.TemplateName}>'
+					print(text)
+					
 			if references in ['o','b']:
 				for reference in item.outbound:
-					print(f'\t> {reference.outbound.Name}')
+					text = f'\t> {reference.outbound.Name}'
+					if reference.category:
+						text = f'{text} : <{reference.category.TemplateName}>'
+					print(text)
 				
 		session.close()
 
