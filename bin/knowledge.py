@@ -134,6 +134,9 @@ class Empty(object):
 		
 @args.command(single=True)
 class Export(object):
+	'''
+	tool to inspect, query and edit Knowledge Base sqlite files
+	'''
 	
 	@args.property(short='v', flag=True, help='verbose logging')
 	def verbose(self):
@@ -269,6 +272,10 @@ class Export(object):
 	@args.operation
 	@args.parameter(name='klobber', short='k', flag=True, help='create from scratch')
 	def load_opml(self, file, klobber=False):
+		'''
+		load OPML xml format into the KDB
+		'''
+		
 		if klobber:
 			Empty().toDB(Empty.base64, self.database) # create clean copy from empty.base64
 
@@ -288,6 +295,10 @@ class Export(object):
 		
 	@args.operation
 	def load_excel(self, file):
+		'''
+		load an excel sheet into the KDB file
+		'''
+		
 		session = self.Session()
 		
 		school = session.query(Item).filter_by(Name="FSHS").first()
@@ -355,6 +366,10 @@ class Export(object):
 		
 	@args.operation(name="import")
 	def importer(self):
+		'''
+		todo: importer skeleton for future development of importing xml
+		'''
+		
 		session = self.Session()
 		
 		item1 = Item()
@@ -382,42 +397,24 @@ class Export(object):
 
 
 	@args.operation
-	@args.parameter(name='name', short='n', help='the name of the element')
-	@args.parameter(name='references', short='r', flag=True, help='list references')
-	@args.parameter(name='categories', short='c', flag=True, help='list categories')
-	@args.parameter(name='attachments', short='a', flag=True, help='list attachments')
-	def inspect(self, name=None, references=False, categories=False, attachments=False):
+	@args.parameter(name='references', short='r', flag=True, help='get the reference categories instead')
+	def categories(self, references=False):
+		'''
+		inspect the structure for categories for the templates in the KDB
+		'''
+		
 		session = self.Session()
 
 		if references:
-			query = session.query(Relation)
-			for reference in query.all():
-				print(f'{reference.inbound.Name} -> {reference.outbound.Name} : {reference.Name}')
-			return
-		
-		if categories:
+			query = session.query(RelationTemplate)
+			for relation in query.all():
+				print(relation.RelationTemplateID, relation.TemplateName)
+					  
+		else:
 			query = session.query(ItemTemplate)
-			if name: query = query.filter_by(Name=name)
 			for category in query.all():
 				print(category.ItemTemplateID, category.TemplateName)
-			return
 		
-		if attachments:
-			query = session.query(ItemAttachment)
-			if name: query = query.join(ItemAttachment.item).filter(Item.Name == name)
-			for attachment in query.all():
-				print(attachment.item.Name[:20], attachment.attachment.Data[:60])
-			return
-		
-		query = session.query(Item)
-		if name: query = query.filter_by(Name=name)
-
-		for item in query.all(): 
-			print(item.Name)
-			if references:
-				for reference in item.outbound:
-					print('\t%s'%reference.outbound.Name)
-
 		session.close()
 
 
@@ -440,6 +437,10 @@ class Export(object):
 	@args.parameter(name='depth', short='d', type=int, help='recursion depth')
 	@args.parameter(name='noCommit', short='n', flag=True, help='no commit for changes')
 	def sort(self, name, depth=1, noCommit=False):
+		'''
+		sort an items child items
+		'''
+		
 		session = self.Session()
 
 		for item in session.query(Item).filter_by(Name=name):
@@ -449,20 +450,79 @@ class Export(object):
 			session.commit()
 		session.close()
 
+
+	@args.operation
+	@args.parameter(name='name', short='n', help='the name of the element')
+	def query_attachments(self, name):
+		'''
+		find the attachments for an item by name
+		'''
+
+		session = self.Session()
+			
+		query = session.query(ItemAttachment)
+		if name: query = query.join(ItemAttachment.item).filter(Item.Name == name)
+		for attachment in query.all():
+			print(attachment.item.Name[:20], attachment.attachment.Data[:60])
+
+		session.close()
+		
+
+	@args.operation
+	@args.parameter(name='name', help='the name of the element')
+	@args.parameter(name='inbound', short='i', flag=True, help='return inboudn instead')
+	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
+	def query_references(self, name, inbound=False, categories=[]):
+		'''
+		get the outbound references for named item
+		'''
+		
+		session = self.Session()
+
+		if inbound:
+			query = session.query(Relation).join(Relation._inbound).join(Relation.category)
+		else:
+			query = session.query(Relation).join(Relation._outbound).join(Relation.category)
+		
+		for reference in query.all():
+			if inbound:
+				if reference.inbound.Name != name:
+					continue
+			else:
+				if reference.outbound.Name != name:
+					continue
+			if categories:
+				if reference.category.TemplateName not in categories:
+					continue
+			print(f'{reference.inbound.Name} -> {reference.outbound.Name} : {reference.Name}')
+
+		session.close()
+		
 		
 	@args.operation
-	@args.parameter(name='value', help='string to search in name for')
+	@args.parameter(name='name', help='string to search in name for')
+	@args.parameter(name='references', short='r', choices=['i','o','b'], help='include references')
 	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
-	def query(self, value, description=False, categories=[]):
+	def query_items(self, name, references=None, categories=[]):
+		'''
+		query a value, and filter by category
+		'''
+		
 		session = self.Session()
 		
-		query = session.query(Item).filter(Item.Name.like(value)).join(Item.category)
+		query = session.query(Item).filter(Item.Name.like(name)).join(Item.category)
 
 		for item in query.all():
 			if categories:
 				if item.category.TemplateName not in categories:
 					continue
 			print(item.Name)
+			if references in ['i','b']:
+				for reference in item.inbound:
+					print(f'\t< {reference.inbound.Name}')
+			if references in ['o','b']:
+				for reference in item.outbound:
+					print(f'\t> {reference.outbound.Name}')
 				
 		session.close()
 
@@ -472,6 +532,10 @@ class Export(object):
 	@args.parameter(name='new', help='string to replace with')
 	@args.parameter(name='description', short='d', flag=True, help='search in description as well')
 	def replace(self, old, new, description=False):
+		'''
+		search and replace in item names
+		'''
+		
 		session = self.Session()
 		for item in session.query(Item):
 			_name = item.Name
@@ -493,6 +557,10 @@ class Export(object):
 		
 	@args.operation
 	def clean(self):
+		'''
+		remote html tags from descriptions
+		'''
+		
 		session = self.Session()
 		for item in session.query(Item):
 			_name = item.Name
@@ -510,6 +578,10 @@ class Export(object):
 
 	@args.operation
 	def export(self):
+		'''
+		export data to directory as tables of raw KDB types
+		'''
+		
 		shutil.copy2(self.database, '%s/.kdb'%self.exportdir)
 		self.inspector =  sqlalchemy.inspect(self.__engine)
 		for table in self.inspector.get_table_names():
@@ -520,6 +592,10 @@ class Export(object):
 
 	@args.operation
 	def deArrow(self):
+		'''
+		remove -> arrows from descriptions
+		'''
+		
 		session = self.Session()
 
 		for item in session.query(Item).filter(Item.ItemID>0): 
