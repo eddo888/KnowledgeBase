@@ -460,9 +460,13 @@ class Export(object):
 
 
 	@args.operation
-	def categorise(self, asis, tobe):
+	@args.parameter(name='asis', help='empty string "" for None')
+	@args.parameter(name='tobe', help='empty string "" for None')
+	@args.parameter(name='name', short='n', help='match on name, %% for wildcard')
+	@args.parameter(name='dryrun', short='d', flag=True, help='dry run, don\'t commit')
+	def categorise(self, asis, tobe, name=None, dryrun=None):
 		'''
-		change the category from asis to tobe, empty string "" for None
+		change the category from asis to tobe
 		'''
 
 		session = self.Session()
@@ -493,6 +497,9 @@ class Export(object):
 			query = session.query(Item).filter_by(ItemTemplateID=_asis.ItemTemplateID)
 		else:
 			query = session.query(Item).filter_by(ItemTemplateID=-1)
+
+		if name:
+			query = query.filter(Item.Name.like(name))
 			
 		for item in query.all():
 			print(f'{item.Name} : <{item.ItemTemplateID}> ')
@@ -500,13 +507,15 @@ class Export(object):
 				item.category = _tobe
 			else:
 				item.ItemTemplateID = -1
-		
-		session.commit()
+
+		if not dryrun:
+			session.commit()
+			
 		session.close()
 
 		
 	@args.operation
-	@args.parameter(name='name', help='name of node to sort references for')
+	@args.parameter(name='name', help='item name to sort')
 	@args.parameter(name='depth', short='d', type=int, help='recursion depth')
 	@args.parameter(name='noCommit', short='n', flag=True, help='no commit for changes')
 	def sort(self, name, depth=1, noCommit=False):
@@ -525,20 +534,24 @@ class Export(object):
 
 
 	@args.operation
-	@args.parameter(name='name', help='string to search in name for')
+	@args.parameter(name='name', short='n', help='match on name, %% for wildcard')
 	@args.parameter(name='description', short='d', flag=True, help='include description')
 	@args.parameter(name='url', short='u', flag=True, help='include url')
 	@args.parameter(name='attachments', short='a', flag=True, help='include attachments')
 	@args.parameter(name='references', short='r', choices={'i':'inbound','o':'outbound','b':'both'}, help='include references')
 	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
-	def query(self, name, description=None, url=None, attachments=None, references=None, categories=[]):
+	def query(self, name=None, description=None, url=None, attachments=None, references=None, categories=[]):
 		'''
 		query a value, and filter by category
 		'''
 		
 		session = self.Session()
 		
-		query = session.query(Item).filter(Item.Name.like(name)).join(Item.category)
+		query = session.query(Item)
+		if name:
+			query = query.filter(Item.Name.like(name))
+
+		query = query.join(Item.category)
 
 		for item in query.all():
 			if categories:
