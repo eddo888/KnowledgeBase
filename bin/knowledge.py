@@ -402,7 +402,7 @@ class Export(object):
 	@args.parameter(name='file', help='cloud outliner cod file')
 	def importer(self, name, file):
 		'''
-		todo: import cloud outliner cod file to a node parent
+		import cloud outliner cod file to a node parent
 		'''
 		
 		session = self.Session()
