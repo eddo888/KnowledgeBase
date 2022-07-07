@@ -36,6 +36,7 @@ from Spanners.Squirrel import Squirrel
 from Spanners.Treeify import Treeify
 from Baubles.Logger import Logger
 from Baubles.Colours import Colours
+from GoldenChild.xpath import *
 
 from sqlalchemy.engine import reflection
 from sqlalchemy import not_
@@ -363,36 +364,62 @@ class Export(object):
 		session.commit()
 		session.close()			
 		
+
+	def _import_node(self, session, cod, childItem, parent, indent=''):
+		'''
+		load an item and iterate through children
+		'''
+
+		text = getElementText(cod.ctx, 'title', childItem)
+		print(f'{indent}{text}')
+
+		notes = getElement(cod.ctx, 'notes', childItem)
+		note = None
+		
+		if notes:
+			note = notes.content
+			if note != '(null)':
+				print(f'{indent}{indent}"{note}"')
+				
+		item = Item()
+		session.add(item)
+		item.Name = text
+		item.Description = note
+
+		relation = Relation()
+		session.add(relation)
+		#relation.Name = 'r1'
+		#relation.Description = 'Relation One'
+		relation.inbound = parent
+		relation.outbound = item
+
+		for grandChild in getElements(cod.ctx, 'ChildItem', childItem):
+			self._import_node(session, cod, grandChild, item, indent=f'{indent}  ')
+			
 		
 	@args.operation(name="import")
-	def importer(self):
+	@args.parameter(name='name', help='name of node to append to')
+	@args.parameter(name='file', help='cloud outliner cod file')
+	def importer(self, name, file):
 		'''
-		todo: importer skeleton for future development of importing xml
+		todo: import cloud outliner cod file to a node parent
 		'''
 		
 		session = self.Session()
-		
-		item1 = Item()
-		session.add(item1)
-		item1.Name = 'i1'
-		item1.Description = 'Item One'
-		
-		item2 = Item()
-		session.add(item2)
-		item2.Name = 'i2'
-		item2.Description = 'Item Two'
 
-		relation1 = Relation()
-		session.add(relation1)
-		relation1.Name = 'r1'
-		relation1.Description = 'Relation One'
-		relation1.inbound = item1
-		relation1.outbound = item2
+		root = session.query(Item).filter_by(Name=name).first()
+
+		if not root:
+			root = Item()
+			session.add(root)
+			root.Name = file
+
+		cod = XML(*getContextFromFile(os.path.expanduser(file)))
+		
+		for childItem in getElements(cod.ctx, '/Document/Properties/context/ChildItem'):
+			self._import_node(session, cod, childItem, root, indent='')
 		
 		session.commit()
-
-		print(relation1.IDTo, relation1.IDFrom)
-		
 		session.close()
 
 
@@ -503,7 +530,21 @@ class Export(object):
 				
 		session.close()
 
+
+	@args.operation
+	def step_in(self):
+		'''
+		todo
+		'''
+
+
+	@args.operation
+	def step_out(self):
+		'''
+		todo
+		'''
 		
+
 	@args.operation
 	@args.parameter(name='old', help='string to search in name for')
 	@args.parameter(name='new', help='string to replace with')
@@ -554,7 +595,7 @@ class Export(object):
 
 
 	@args.operation
-	def export(self):
+	def to_csv(self):
 		'''
 		export data to directory as tables of raw KDB types
 		'''
