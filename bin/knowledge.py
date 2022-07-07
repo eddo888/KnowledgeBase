@@ -458,7 +458,54 @@ class Export(object):
 				sequence += 10
 				self._sort(session, relation.outbound, depth-1, indent='%s\t'%indent)
 
-				
+
+	@args.operation
+	def categorise(self, asis, tobe):
+		'''
+		change the category from asis to tobe
+		empty string "" for None
+		'''
+
+		session = self.Session()
+
+		if asis == '':
+			_asis = None
+			print('from: <None>')
+		else:
+			_asis = session.query(ItemTemplate).filter_by(TemplateName=asis).first()
+			if _asis:
+				print(f'from: {_asis.TemplateName}')
+			else:
+				sys.stderr.write(f'can\' find category {asis}\n')
+				return
+
+		if tobe == '':
+			_tobe = None
+			print('to: <None>')
+		else:
+			_tobe = session.query(ItemTemplate).filter_by(TemplateName=tobe).first()
+			if _tobe:
+				print(f'to:  -> {_tobe.TemplateName}')
+			else:
+				sys.stderr.write(f'can\'t find category {tobe}\n')
+				return
+
+		if _asis:
+			query = session.query(Item).filter_by(ItemTemplateID=_asis.ItemTemplateID)
+		else:
+			query = session.query(Item).filter_by(ItemTemplateID=-1)
+			
+		for item in query.all():
+			print(f'{item.Name} : <{item.ItemTemplateID}> ')
+			if _tobe:
+				item.category = _tobe
+			else:
+				item.ItemTemplateID = -1
+		
+		session.commit()
+		session.close()
+
+		
 	@args.operation
 	@args.parameter(name='name', help='name of node to sort references for')
 	@args.parameter(name='depth', short='d', type=int, help='recursion depth')
