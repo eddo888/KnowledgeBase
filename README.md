@@ -9,15 +9,16 @@ tool to read/modify kdb files
 ```bash
 $ knowledge.py -h
 usage: knowledge.py [-h] [-D DATABASE] [-e EXPORTDIR] [-k] [-v]
-                    {categories,clean,deArrow,import,load_excel,load_opml,query,replace,sort,step_in,step_out,to_csv,args}
+                    {categories,categorise,clean,deArrow,import,load_excel,load_opml,query,replace,sort,step_in,step_out,to_csv,args}
                     ...
 
 tool to inspect, query and edit Knowledge Base sqlite files
 
 positional arguments:
-  {categories,clean,deArrow,import,load_excel,load_opml,query,replace,sort,step_in,step_out,to_csv,args}
+  {categories,categorise,clean,deArrow,import,load_excel,load_opml,query,replace,sort,step_in,step_out,to_csv,args}
                         operations
     categories          inspect the structure for categories for the templates in the KDB
+    categorise          change the category from asis to tobe, empty string "" for None
     clean               remote html tags from descriptions
     deArrow             remove -> arrows from descriptions
     import              import cloud outliner cod file to a node parent
@@ -39,7 +40,6 @@ optional arguments:
                         output to export dir, default=export
   -k, --klobber         klobber db
   -v, --verbose         verbose logging
-
 ```
 
 ### usage
