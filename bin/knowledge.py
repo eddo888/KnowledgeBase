@@ -538,7 +538,7 @@ class Export(object):
 	@args.parameter(name='description', short='d', flag=True, help='include description')
 	@args.parameter(name='url', short='u', flag=True, help='include url')
 	@args.parameter(name='attachments', short='a', flag=True, help='include attachments')
-	@args.parameter(name='references', short='r', choices={'i':'inbound','o':'outbound','b':'both'}, help='include references')
+	@args.parameter(name='references', short='r', choices=['i','o','b'], help='include references, inbound/outbound/both')
 	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
 	def query(self, name=None, description=None, url=None, attachments=None, references=None, categories=[]):
 		'''
