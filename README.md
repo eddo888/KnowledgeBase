@@ -9,22 +9,26 @@ tool to read/modify kdb files
 ```bash
 $ knowledge.py -h
 usage: knowledge.py [-h] [-D DATABASE] [-e EXPORTDIR] [-k] [-v]
-                    {clean,deArrow,export,import,inspect,load_excel,load_opml,query,replace,sort,args}
+                    {categories,clean,deArrow,import,load_excel,load_opml,query,replace,sort,step_in,step_out,to_csv,args}
                     ...
 
+tool to inspect, query and edit Knowledge Base sqlite files
+
 positional arguments:
-  {clean,deArrow,export,import,inspect,load_excel,load_opml,query,replace,sort,args}
+  {categories,clean,deArrow,import,load_excel,load_opml,query,replace,sort,step_in,step_out,to_csv,args}
                         operations
-    clean
-    deArrow
-    export
-    import
-    inspect
-    load_excel
-    load_opml
-    query
-    replace
-    sort
+    categories          inspect the structure for categories for the templates in the KDB
+    clean               remote html tags from descriptions
+    deArrow             remove -> arrows from descriptions
+    import              import cloud outliner cod file to a node parent
+    load_excel          load an excel sheet into the KDB file
+    load_opml           load OPML xml format into the KDB
+    query               query a value, and filter by category
+    replace             search and replace in item names
+    sort                sort an items child items
+    step_in             todo
+    step_out            todo
+    to_csv              export data to directory as tables of raw KDB types
     args                print the values for the args
 
 optional arguments:
@@ -36,17 +40,16 @@ optional arguments:
   -k, --klobber         klobber db
   -v, --verbose         verbose logging
 
-
 ```
 
 ### usage
 
-to inspect a kdb do the following;
+to query a kdb do the following; note the '%' for sql like patten globbing
 
 ```bash
-$ pip3 install KnowledgeBase
+$ pip3 install --upgrade KnowledgeBase
 
-$ knowledge.py -D Recipies.kdb inspect 
+$ knowledge.py -D Recipies.kdb query '%' 
 Recipies
 Fetachini Pesto
 Corn fritters
@@ -55,28 +58,24 @@ Corn fritters
 or you can inspect with filter parameters
 
 ```bash
-$ knowledge.py -D Recipies.kdb inspect -h
-usage: knowledge.py inspect [-h] [-n NAME] [-r] [-c] [-a]
+$ knowledge.py query -h
+usage: knowledge.py query [-h] [-d] [-u] [-a] [-r {i,o,b}] [-c CATEGORIES [CATEGORIES ...]] name
+
+query a value, and filter by category
+
+positional arguments:
+  name                  string to search in name for
 
 optional arguments:
   -h, --help            show this help message and exit
-  -n NAME, --name NAME  the name of the element
-  -r, --references      list references
-  -c, --categories      list categories
-  -a, --attachments     list attachments
-```
-
-which would give you filtered results like this
-
-```bash
-$ knowledge.py -D Recipies.kdb inspect -n 'Recipies' -r
-Recipies
-	Fetachini Pesto
-	Corn fritters
+  -d, --description     include description
+  -u, --url             include url
+  -a, --attachments     include attachments
+  -r {i,o,b}, --references {i,o,b}
+                        include references
+  -c CATEGORIES [CATEGORIES ...], --categories CATEGORIES [CATEGORIES ...]
+                        restrict to categories
 
 ```
 
-## outline.py
-
-tool to read opml files and work with kdb loading formats
 

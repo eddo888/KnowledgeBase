@@ -462,8 +462,7 @@ class Export(object):
 	@args.operation
 	def categorise(self, asis, tobe):
 		'''
-		change the category from asis to tobe
-		empty string "" for None
+		change the category from asis to tobe, empty string "" for None
 		'''
 
 		session = self.Session()
