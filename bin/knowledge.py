@@ -237,7 +237,8 @@ class Export(object):
 				item = Item()
 				item.Name = topic['@text']
 				if 'note' in topic.keys():
-					item.Description = topic['note']
+					note = topic['note']
+					item.Description = f'<html><body>{note}</body></html>'
 				item.URI = topic['@id']
 				session.add(item)
 
@@ -620,7 +621,8 @@ class Export(object):
 		if name:
 			query = query.filter(Item.Name.like(name))
 
-		query = query.join(Item.category)
+		if len(categories):
+			query = query.join(Item.category)
 
 		for item in query.all():
 			if categories:
