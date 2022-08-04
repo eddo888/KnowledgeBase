@@ -29,6 +29,7 @@ from collections import OrderedDict
 from dotmap import DotMap
 from jsonpath import jsonpath
 from bs4 import BeautifulSoup as BS
+from zipfile import ZipFile
 
 from Argumental.Argue import Argue
 from Perdy.pretty import prettyPrintLn
@@ -227,6 +228,74 @@ class Export(object):
 		return self.__Session()
 
 
+	def _topics(self, session, index, topics, parent, parent_id='-1', indent='\t'):
+		items = {} # topic['@id'] : Item()
+		other = []
+		
+		for topic in topics:
+			if topic['@parent'] == parent_id:
+				item = Item()
+				item.Name = topic['@text']
+				if 'note' in topic.keys():
+					item.Description = topic['note']
+				item.URI = topic['@id']
+				session.add(item)
+
+				relation = Relation()
+				relation.inbound = item
+				relation.outbound = parent
+				session.add(relation)
+				items[item.URI] = item
+				index[item.URI] = item
+			else:
+				other.append(topic)
+
+		for id, item in items.items():
+			print(f'{indent}{item.Name}')
+			self._topics(session, index, other, item, parent_id=id, indent=f'\t{indent}')
+			
+
+	@args.operation
+	@args.parameter(name='klobber', short='k', flag=True, help='create from scratch')
+	def load_smmx(self, file, klobber=False):
+		'''
+		read a Simple Mind xml smmx file and load it into the database
+		'''
+		
+		if klobber:
+			Empty().toDB(Empty.base64, self.database) # create clean copy from empty.base64
+
+		session = self.Session()
+		root = Item()
+		session.add(root)
+
+		root.Description = file
+
+		with ZipFile(file) as zf:
+			with zf.open('document/mindmap.xml') as xf:
+				smmx = xmltodict.parse(xf.read().decode('UTF8'))
+
+				with open(f'{file}.json','w') as jf:
+					json.dump(smmx, jf, indent='\t')
+
+				topics = smmx['simplemind-mindmaps']['mindmap']['topics']['topic']
+				index = dict() # topic['@id'] : Item()
+				self._topics(session, index, topics, root)
+
+				relations = smmx['simplemind-mindmaps']['mindmap']['relations']['relation']
+				for relation in relations:
+					source = index[relation['@source']]
+					target = index[relation['@target']]
+					print(f'{source.Name} -> {target.Name}')
+					_relation = Relation()
+					_relation.inbound = target
+					_relation.outbound = source
+					session.add(_relation)
+					
+		session.commit()
+		session.close()
+		
+		
 	def _sequences(self, session):
 		results = dict()
 		for sequence in session.query(t_sqlite_sequence):
