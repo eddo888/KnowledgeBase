@@ -228,6 +228,10 @@ class Export(object):
 		return self.__Session()
 
 
+	def _attachment(self, session, item, data):
+		item.Description = f'<html><body>{data}</body></html>'
+	
+
 	def _topics(self, session, index, topics, parent, parent_id='-1', indent='\t'):
 		items = {} # topic['@id'] : Item()
 		other = []
@@ -238,13 +242,14 @@ class Export(object):
 				item.Name = topic['@text']
 				if 'note' in topic.keys():
 					note = topic['note']
-					item.Description = f'<html><body>{note}</body></html>'
+					self._attachment(session, item, note)
+					
 				item.URI = topic['@id']
 				session.add(item)
 
 				relation = Relation()
-				relation.inbound = item
-				relation.outbound = parent
+				relation.inbound = parent
+				relation.outbound = item
 				session.add(relation)
 				items[item.URI] = item
 				index[item.URI] = item
@@ -289,8 +294,8 @@ class Export(object):
 					target = index[relation['@target']]
 					print(f'{source.Name} -> {target.Name}')
 					_relation = Relation()
-					_relation.inbound = target
-					_relation.outbound = source
+					_relation.inbound = source
+					_relation.outbound = target
 					session.add(_relation)
 					
 		session.commit()
@@ -494,6 +499,38 @@ class Export(object):
 
 
 	@args.operation
+	def attachments(self):
+		'''
+		inspect the structure for categories for the templates in the KDB
+		'''
+		
+		session = self.Session()
+
+		if True: # show BigText
+			print('BigText: []')
+
+			query = session.query(BigText)
+			for bt in query.all():
+				print(f'\t{bt.BigTextID}: {bt.Data}')
+
+		query = session.query(ItemAttachment)
+		for attachment in query.all():
+			attachment.AttachmentID = attachment.RecordID
+
+		print('ItemAttachment') 
+		query = session.query(ItemAttachment)
+		for attachment in query.all():
+			print(f'\t{attachment.RecordID}:')
+			for key in filter(lambda x: not x.startswith('_'), dir(attachment)):
+				try:
+					print(f'\t\t{key}={getattr(attachment,key)}')
+				except:
+					pass
+		
+		session.close()
+
+
+	@args.operation
 	@args.parameter(name='references', short='r', flag=True, help='get the reference categories instead')
 	def categories(self, references=False):
 		'''
@@ -607,25 +644,32 @@ class Export(object):
 	@args.parameter(name='name', short='n', help='match on name, %% for wildcard')
 	@args.parameter(name='description', short='d', flag=True, help='include description')
 	@args.parameter(name='url', short='u', flag=True, help='include url')
+	@args.parameter(name='properties', short='p', flag=True, help='include properties')
 	@args.parameter(name='attachments', short='a', flag=True, help='include attachments')
 	@args.parameter(name='references', short='r', choices=['i','o','b'], help='include references, inbound/outbound/both')
 	@args.parameter(name='categories', short='c', nargs='+',  help='restrict to categories')
-	def query(self, name=None, description=None, url=None, attachments=None, references=None, categories=[]):
+	def query(self, name=None, description=None, url=None, properties=None, attachments=None, references=None, categories=[]):
 		'''
 		query a value, and filter by category
 		'''
 		
 		session = self.Session()
 		
+		if attachments:
+			query = session.query(ItemAttachment)
+			for attachment in query.all():
+				attachment.AttachmentID = attachment.RecordID
+
 		query = session.query(Item)
 		if name:
 			query = query.filter(Item.Name.like(name))
 
+			
 		if len(categories):
 			query = query.join(Item.category)
 
 		for item in query.all():
-			if categories:
+			if len(categories):
 				if item.category.TemplateName not in categories:
 					continue
 
@@ -639,11 +683,14 @@ class Export(object):
 				
 			if url:
 				print(f'\t@ {item.DirectLinkURL}')
+
+			if properties:
+				print(f'\t {item.Properties}')
 				
 			if attachments:
-				for attachment in item.attachments:
-					print(f'\t& {attachment.attachment.Data}')
-					
+				for index, attachment in enumerate(item.attachments):
+					print(f'\t& {index}: {attachment.attachment.Data}')
+						
 			if references in ['i','b']:
 				for reference in item.inbound:
 					text = f'\t< {reference.inbound.Name}'
