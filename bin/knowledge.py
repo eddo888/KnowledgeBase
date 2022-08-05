@@ -2,7 +2,7 @@
 
 # PYTHON_ARGCOMPLETE_OK
 
-import os, re, sys, json, codecs, logging, requests, arrow, shutil, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
+import os, re, sys, json, uuid, codecs, logging, requests, arrow, shutil, inspect, sqlalchemy, unicodedata, uuid, base64, datetime, time, pytz, xmltodict
 
 if os.path.dirname(sys.argv[0]) == '.':
 	sys.path.insert(0, '..')
@@ -230,7 +230,21 @@ class Export(object):
 
 	def _attachment(self, session, item, data):
 		item.Description = f'<html><body>{data}</body></html>'
+		return
 	
+		bb = BigBlob()
+		bb.Data = data.encode('UTF8')
+		session.add(bb)
+		bt = BigText()
+		bt.Data = data
+		session.add(bt)
+		attachment = ItemAttachment()
+		attachment.Sequence = 0
+		attachment.URI = str(uuid.uuid4())
+		attachment.item = item
+		item.attachments.append(attachment)
+		session.add(attachment)
+		
 
 	def _topics(self, session, index, topics, parent, parent_id='-1', indent='\t'):
 		items = {} # topic['@id'] : Item()
